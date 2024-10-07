@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KBC Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        #nameForm {
+            margin-bottom: 20px;
+        }
+        #question {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #333;
+        }
+        #options {
+            display: flex;
+            flex-direction: column;
+            width: 300px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 20px;
+            color: green;
+        }
+        #qrCode {
+            margin-top: 20px;
+            text-align: center;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: calc(100% - 22px);
+            margin-bottom: 10px;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border: 2px solid #007BFF;
+        }
+    </style>
+    <script>
+        let playerName = '';
+        async function fetchQuestion() {
+            const response = await fetch('http://localhost:3000/question');
+            const questionData = await response.json();
+            document.getElementById('question').innerText = questionData.question;
+            const options = questionData.options.map((option, index) => 
+                `<button onclick="submitAnswer(${index})">${option}</button>`).join('');
+            document.getElementById('options').innerHTML = options;
+        }
+
+        async function submitAnswer(answer) {
+            const response = await fetch('http://localhost:3000/answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answer })
+            });
+            const result = await response.json();
+            if (result.correct) {
+                document.getElementById('message').innerText = `Congratulations, ${playerName}!`;
+            } else {
+                alert('Wrong answer!');
+            }
+            fetchQuestion();
+        }
+
+        function setName() {
+            playerName = document.getElementById('nameInput').value;
+            document.getElementById('nameForm').style.display = 'none';
+            fetchQuestion();
+        }
+    </script>
+</head>
+<body>
+    <div id="nameForm">
+        <input type="text" id="nameInput" placeholder="Enter your name" />
+        <button onclick="setName()">Submit</button>
+    </div>
+    <h2 id="question"></h2>
+    <div id="options"></div>
+    <div id="message"></div>
+    <div id="qrCode"></div>
+    <script>
+        fetch('http://localhost:3000/qr').then(response => response.text()).then(src => {
+            document.getElementById('qrCode').innerHTML = src;
+        });
+    </script>
+</body>
+</html>
